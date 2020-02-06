@@ -1,0 +1,52 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  name: Configure Financial Products Kubernetes Clusters
+  tasks:
+
+    # - name: "Configure external ingress"
+    #   import_role: 
+    #     name: stone-payments.aks
+    #   vars:
+    #     aks_service_principal_app_id: "{{ lookup('env','TF_VAR_service_principal_app_id') }}"
+    #     aks_service_principal_password: "{{ lookup('env','TF_VAR_service_principal_password') }}"
+    #     aks_registry_url: "{{ lookup('env','aks_registry_url') }}"
+    #     aks_kubeconfig_path: "{{ lookup('env','aks_kubeconfig_path') }}"
+    #     aks_rbac_developers_role: "{{ lookup('env','aks_rbac_developers_role') }}"
+    #     aks_rbac_developers_aad_group: "{{ lookup('env','aks_rbac_developers_aad_group') }}"
+    #     aks_monitoring_domain: "{{ lookup('env','aks_monitoring_domain') }}"
+    #     aks_default_certificate_key_path: "{{ lookup('env','aks_default_certificate_key_path') }}"
+    #     aks_default_certificate_path: "{{ lookup('env','aks_default_certificate_path') }}"
+    #     ingress_nginx: "ingress-nginx-external"
+    #     azure_load_balancer_internal: "{{ lookup('env','aks_azure_load_balancer_internal') }}"
+    #     grafana_name: "{{ lookup('env','grafana_name') }}"
+    #     prometheus_name: "{{ lookup('env','prometheus_name') }}"
+    #     alertmanager_name: "{{ lookup('env','alertmanager_name') }}"
+    #   when: has_external_ingress == "true"
+
+    - name: "Configure internal ingress"
+      import_role: 
+        name: stone-payments.aks
+      vars:
+        aks_service_principal_app_id: "{{ lookup('env','TF_VAR_service_principal_app_id') }}"
+        aks_service_principal_password: "{{ lookup('env','TF_VAR_service_principal_password') }}"
+        aks_registry_url: "{{ lookup('env','aks_registry_url') }}"
+        aks_kubeconfig_path: "{{ lookup('env','aks_kubeconfig_path') }}"
+        aks_rbac_developers_role: "{{ lookup('env','aks_rbac_developers_role') }}"
+        aks_rbac_developers_aad_group: "{{ lookup('env','aks_rbac_developers_aad_group') }}"
+        aks_monitoring_domain: "{{ lookup('env','aks_monitoring_domain') }}"
+        aks_default_certificate_key_path: "{{ lookup('env','aks_default_certificate_key_path') }}"
+        aks_default_certificate_path: "{{ lookup('env','aks_default_certificate_path') }}"
+        grafana_name: "{{ lookup('env','grafana_name') }}"
+        prometheus_name: "{{ lookup('env','prometheus_name') }}"
+        alertmanager_name: "{{ lookup('env','alertmanager_name') }}"
+
+    - name: "Create {{ scd_trava_issuer_kubernetes_namespace_name }} namespace"
+      include_role: 
+        name: stone-payments.kubernetes-namespace
+      vars:
+        - kubernetes_namespace_kubeconfig_path: "{{ lookup('env','aks_kubeconfig_path') }}"
+        - kubernetes_namespace_azdevops_pat: "{{ lookup('env','vsts_accesstoken') }}"
+        - kubernetes_namespace_name: "{{ scd_trava_issuer_kubernetes_namespace_name }}"        
+        - kubernetes_namespace_azdevops_project: "{{ scd_kubernetes_namespace_azdevops_project }}"

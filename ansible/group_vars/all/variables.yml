@@ -1,0 +1,5 @@
+# SCD Azure DevOps Project Name
+scd_kubernetes_namespace_azdevops_project: "finprods-SCD"
+
+# SCD Kubernetes Namespaces
+scd_trava_issuer_kubernetes_namespace_name: "scd-trava-issuer"

@@ -1,0 +1,14 @@
+- name: stone-payments.aks
+  src: git@github.com:stone-payments/ansible-aks.git
+  scm: git
+  version: "feat/ingress-with-public-ip"
+
+- name: stone-payments.kubernetes-namespace
+  src: git@github.com:stone-payments/ansible-kubernetes-namespace.git
+  scm: git
+  version: "v1.1.0"
+
+- name: stone-payments.azure-devops-service-connection
+  src: git@github.com:stone-payments/ansible-modules-azure-devops-service-connection.git
+  scm: git
+  version: "v1.0.0"
