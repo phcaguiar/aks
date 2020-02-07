@@ -1,0 +1,103 @@
+stages:
+- stage: Build
+  displayName: Build
+  variables:
+  - group: "Infra Common"
+  jobs:
+
+    - job: Common_Build
+      variables:
+      - group: "Infra Non-PRD"
+      - group: "Non-PRD Financial Products Service Principal"
+      displayName: "Common Build"
+      pool:
+        vmImage: 'ubuntu-latest'
+      workspace:
+        clean: all
+      steps:
+      - bash: |
+          git config --global url."https://github.com".insteadOf git://github.com
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git config --global url."https://".insteadOf git://
+          git config --global credential.helper store
+          cd ~
+          echo "https://$(githubtoken):x-oauth-basic@github.com" > .git-credentials
+        displayName: 'Config GitHub Token Auth'   
+      - bash: |
+          pip3 install pipenv
+          python3 -m pipenv sync --python=$(which python)
+        workingDirectory: ansible
+        displayName: 'Install Ansible Dependencies'            
+      - bash: |
+          python3 -m pipenv run ansible-galaxy install -r roles/requirements.yml --force -p roles
+        workingDirectory: ansible
+        displayName: 'Download Ansible Roles Dependencies'
+      - bash: |
+          python3 -m pipenv run ansible-playbook --syntax-check playbook.yml
+        workingDirectory: ansible
+        displayName: 'Check Ansible Playbook Syntax'
+      - bash: |
+          rm -f ~/.git-credentials
+        displayName: 'Delete .git-credentials'
+        condition: in(variables['Agent.JobStatus'], 'Succeeded', 'SucceededWithIssues', 'Failed', 'Canceled', 'PartiallySucceeded')                        
+      - publish: ansible
+        artifact: ansible
+
+    - job: Dev_Build
+      variables:
+      - group: "Infra Non-PRD"
+      - group: "Non-PRD Financial Products Service Principal"
+      displayName: "Dev Build"
+      pool:
+        vmImage: 'ubuntu-latest'
+      workspace:
+        clean: all
+      steps:
+      - bash: |
+          git config --global url."https://github.com".insteadOf git://github.com
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git config --global url."https://".insteadOf git://
+          git config --global credential.helper store
+          cd ~
+          echo "https://$(githubtoken):x-oauth-basic@github.com" > .git-credentials
+        displayName: 'Config GitHub Token Auth'            
+      - bash: |
+          git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+          export PATH="$HOME/.tfenv/bin:$PATH"
+          tfenv install
+        workingDirectory: 'terraform'
+        displayName: 'Sets terraform version to the specified on .terraform-version file'
+      - bash: |
+          export PATH="$HOME/.tfenv/bin:$PATH"
+          terraform init 
+        workingDirectory: 'terraform'
+        displayName: 'Terraform Init'
+        env:
+          ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
+      - bash: |
+          export PATH="$HOME/.tfenv/bin:$PATH"
+          terraform validate 
+        workingDirectory: 'terraform'
+        displayName: 'Terraform Validate'
+      - bash: |
+          export PATH="$HOME/.tfenv/bin:$PATH"
+          terraform plan -out tf-plan
+        workingDirectory: 'terraform'
+        displayName: 'Terraform Plan'
+        env:
+          ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
+          ARM_CLIENT_SECRET: $(NONPRD_ARM_CLIENT_SECRET)
+          ARM_TENANT_ID: $(COMMON_ARM_TENANT_ID)
+          ARM_CLIENT_ID: $(NONPRD_ARM_CLIENT_ID)
+          TF_VAR_ad_client_app_id: $(TF_VAR_ad_client_app_id)
+          TF_VAR_ad_server_app_id: $(TF_VAR_ad_server_app_id)
+          TF_VAR_ad_tennant_id: $(COMMON_ARM_TENANT_ID)
+          TF_VAR_ad_server_app_secret: $(TF_VAR_ad_server_app_secret)
+          TF_VAR_service_principal_app_id: $(NONPRD_ARM_CLIENT_ID)
+          TF_VAR_service_principal_password: $(NONPRD_ARM_CLIENT_SECRET)
+      - bash: |
+          rm -f ~/.git-credentials
+        displayName: 'Delete .git-credentials'
+        condition: in(variables['Agent.JobStatus'], 'Succeeded', 'SucceededWithIssues', 'Failed', 'Canceled', 'PartiallySucceeded')              
+      - publish: terraform
+        artifact: plan-dev

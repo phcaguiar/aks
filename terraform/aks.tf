@@ -1,6 +1,6 @@
 module "aks" {
 
-  source = "modules/aks"
+  source = "./modules/aks"
 
   resource_group_name         = var.product_resource_group_name
   location_name               = var.location

@@ -1,0 +1,19 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+  branches:
+    include:
+    - feat/refact-aks
+  paths:
+    include:
+    - azure/src/services/*
+    exclude:
+    - README.md
+    - gcp/*
+    - azure/src/baseline/*
+pr:
+  branches:
+    include:
+    - feat/refact-aks
+stages:
+- template: build.yaml
+- template: deploy.yaml

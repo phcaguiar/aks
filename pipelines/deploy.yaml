@@ -1,0 +1,110 @@
+stages:
+
+- stage: Dev_Deploy
+  displayName: "Dev Deploy"
+  condition: "and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/feat/refact-aks'))"
+  variables:
+    - group: Infra Common
+    - group: Infra Non-PRD
+    - group: Non-PRD Financial Products Service Principal
+    - group: INFRA PRD KV CERTS
+    - group: FinProd NonPRD KV CERTS
+    - name: ENV
+      value: ec2-dev
+  jobs:
+    - deployment: Dev_Deploy
+      displayName: "Dev Deploy"
+      environment: ec2-dev
+      pool:
+        vmImage: 'ubuntu-latest'
+      strategy:
+        runOnce:
+          deploy:  
+            steps:
+            - download: current
+              artifact: plan-dev
+            - download: current  
+              artifact: ansible
+            - bash: |
+                chmod +x .terraform/plugins/linux_amd64/terraform-provider*
+              workingDirectory: $(Pipeline.Workspace)/plan-dev
+              displayName: 'Set Terraform Provider File Permissions'
+            - bash: |
+                git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+                export PATH="$HOME/.tfenv/bin:$PATH"
+                tfenv install
+              workingDirectory: $(Pipeline.Workspace)/plan-dev
+              displayName: 'Sets terraform version to the specified on .terraform-version file'
+            - bash: |
+                export PATH="$HOME/.tfenv/bin:$PATH"
+                terraform apply -auto-approve tf-plan
+              displayName: 'Terraform Apply'
+              workingDirectory: $(Pipeline.Workspace)/plan-dev
+              env:
+                ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
+                ARM_CLIENT_SECRET: $(NONPRD_ARM_CLIENT_SECRET)
+                ARM_TENANT_ID: $(COMMON_ARM_TENANT_ID)
+                ARM_CLIENT_ID: $(NONPRD_ARM_CLIENT_ID)
+                TF_VAR_ad_client_app_id: $(TF_VAR_ad_client_app_id)
+                TF_VAR_ad_server_app_id: $(TF_VAR_ad_server_app_id)
+                TF_VAR_ad_tennant_id: $(COMMON_ARM_TENANT_ID)
+                TF_VAR_ad_server_app_secret: $(TF_VAR_ad_server_app_secret)
+                TF_VAR_service_principal_app_id: $(NONPRD_ARM_CLIENT_ID)
+                TF_VAR_service_principal_password: $(NONPRD_ARM_CLIENT_SECRET)
+            - bash: |
+                export PATH="$HOME/.tfenv/bin:$PATH"
+                terraform output ins_kube_config_raw > $(Pipeline.Workspace)/ansible/$(ins_aks_kubeconfig_path)
+              displayName: 'Terraform Output to Extract kubeconfig of Clusters'
+              workingDirectory: $(Pipeline.Workspace)/plan-dev
+              env:
+                ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
+                ARM_CLIENT_SECRET: $(NONPRD_ARM_CLIENT_SECRET)
+                ARM_TENANT_ID: $(COMMON_ARM_TENANT_ID)
+                ARM_CLIENT_ID: $(NONPRD_ARM_CLIENT_ID)
+            - bash: |
+                pip3 install pipenv
+                python3 -m pipenv sync --python=$(which python)
+              displayName: 'Install Ansible Dependencies'
+              workingDirectory: $(Pipeline.Workspace)/ansible
+            - bash: |
+                cert='$(apps-stone-com-br)'
+                certificate_path='$(aks_private_certificate_path)'
+                key_path='$(aks_private_certificate_key_path)'
+                echo "${cert}" > base.p12
+                cat base.p12 | base64 -d > cert.p12                
+                echo "Getting Cert"
+                openssl pkcs12 -nokeys -in cert.p12 -out ${certificate_path} -password pass:
+                echo "Getting key"
+                openssl pkcs12 -nocerts -in cert.p12 -out key.p12 -passout pass:dummy -password pass:
+                echo "Extracting key"
+                openssl pkey -in key.p12 -passin pass:dummy -out - > ${key_path}
+                rm -rf cert.pem cert.crt key.p12
+              displayName: 'Download certificates from Azure Key Vault for internal Ingress'
+              workingDirectory: $(Pipeline.Workspace)/ansible
+            - bash: |
+                python3 -m pipenv run ansible-playbook playbook.yml -i inventories/dev-ec2/
+              displayName: 'Run Ansible to configure inside cluster'
+              workingDirectory: $(Pipeline.Workspace)/ansible
+              env:
+                TF_VAR_service_principal_app_id: $(NONPRD_ARM_CLIENT_ID)
+                TF_VAR_service_principal_password: $(NONPRD_ARM_CLIENT_SECRET)
+                aks_registry_url: $(aks_prod_registry_url)
+                aks_kubeconfig_path: $(ins_aks_kubeconfig_path)
+                aks_monitoring_domain: $(aks_dr_monitoring_domain)
+                aks_rbac_developers_role: $(aks_rbac_developers_role)
+                aks_rbac_developers_aad_group: $(aks_rbac_developers_aad_group)
+                aks_default_certificate_path: $(aks_private_certificate_path)
+                aks_default_certificate_key_path: $(aks_private_certificate_key_path)
+                grafana_name: $(aks_inside_grafana_name)
+                prometheus_name: $(aks_inside_prometheus_name)
+                alertmanager_name: $(aks_inside_alertmanager_name)
+                vsts_accesstoken: $(vsts_accesstoken)
+            - bash: |
+                rm -rf $(ins_aks_kubeconfig_path)
+                rm -rf $(aks_private_certificate_path)
+                rm -rf $(aks_private_certificate_key_path)
+                rm -rf $(aks_public_certificate_path)
+                rm -rf $(aks_public_certificate_key_path)
+              displayName: 'Clean files'
+              workingDirectory: $(Pipeline.Workspace)/ansible
+              condition: in(variables['Agent.JobStatus'], 'Succeeded', 'SucceededWithIssues', 'Failed', 'Canceled', 'PartiallySucceeded')               
