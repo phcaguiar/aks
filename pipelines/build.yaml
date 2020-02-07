@@ -7,7 +7,7 @@ stages:
 
     - job: Common_Build
       variables:
-      - group: "Infra Non-PRD"
+      - group: "Infra Dev"
       - group: "Non-PRD Financial Products Service Principal"
       displayName: "Common Build"
       pool:
@@ -45,7 +45,7 @@ stages:
 
     - job: Dev_Build
       variables:
-      - group: "Infra Non-PRD"
+      - group: "Infra Dev"
       - group: "Non-PRD Financial Products Service Principal"
       displayName: "Dev Build"
       pool:

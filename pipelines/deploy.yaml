@@ -5,7 +5,7 @@ stages:
   condition: "and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/feat/refact-aks'))"
   variables:
     - group: Infra Common
-    - group: Infra Non-PRD
+    - group: Infra Dev
     - group: Non-PRD Financial Products Service Principal
     - group: INFRA PRD KV CERTS
     - group: FinProd NonPRD KV CERTS
