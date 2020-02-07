@@ -1,6 +1,6 @@
 module "aks" {
 
-  source = "git@github.com:stone-payments/terraform-aks.git?ref=feat/add-support-to-node-count"
+  source = "modules/aks"
 
   resource_group_name         = var.product_resource_group_name
   location_name               = var.location
