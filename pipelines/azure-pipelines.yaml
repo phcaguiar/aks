@@ -2,7 +2,7 @@ name: $(Date:yyyyMMdd)$(Rev:.r)
 trigger:
   branches:
     include:
-    - feat/refact-aks
+    - master
   paths:
     include:
     - azure/src/services/*
@@ -13,7 +13,7 @@ trigger:
 pr:
   branches:
     include:
-    - feat/refact-aks
+    - master
 stages:
 - template: build.yaml
 - template: deploy.yaml
