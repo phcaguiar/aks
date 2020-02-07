@@ -4,12 +4,8 @@ trigger:
     include:
     - master
   paths:
-    include:
-    - azure/src/services/*
     exclude:
     - README.md
-    - gcp/*
-    - azure/src/baseline/*
 pr:
   branches:
     include:
