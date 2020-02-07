@@ -70,15 +70,11 @@ stages:
                 cert='$(financialproducts-staging)'
                 certificate_path='$(aks_private_certificate_path)'
                 key_path='$(aks_private_certificate_key_path)'
-                echo "${cert}" > base.p12
-                cat base.p12 | base64 -d > cert.p12                
-                echo "Getting Cert"
-                openssl pkcs12 -nokeys -in cert.p12 -out ${certificate_path} -password pass:
-                echo "Getting key"
-                openssl pkcs12 -nocerts -in cert.p12 -out key.p12 -passout pass:dummy -password pass:
-                echo "Extracting key"
-                openssl pkey -in key.p12 -passin pass:dummy -out - > ${key_path}
-                rm -rf cert.pem cert.crt key.p12
+                echo "${cert}" > cert.pem
+                openssl x509 -in cert.pem -out - > ${certificate_path}               
+                curl -L https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem.txt >> ${certificate_path}
+                openssl pkey -in cert.pem -out - > ${key_path}
+                rm -rf cert.pem
               displayName: 'Download certificates from Azure Key Vault for internal Ingress'
               workingDirectory: $(Pipeline.Workspace)/ansible
             - bash: |
