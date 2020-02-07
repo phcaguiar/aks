@@ -2,7 +2,7 @@ stages:
 
 - stage: Dev_Deploy
   displayName: "Dev Deploy"
-  condition: "and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/feat/refact-aks'))"
+  condition: "and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/master'))"
   variables:
     - group: Infra Common
     - group: Infra Dev
