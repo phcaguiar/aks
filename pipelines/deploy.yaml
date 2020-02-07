@@ -67,7 +67,7 @@ stages:
               displayName: 'Install Ansible Dependencies'
               workingDirectory: $(Pipeline.Workspace)/ansible
             - bash: |
-                cert='$(apps-stone-com-br)'
+                cert='$(financialproducts-staging)'
                 certificate_path='$(aks_private_certificate_path)'
                 key_path='$(aks_private_certificate_key_path)'
                 echo "${cert}" > base.p12
@@ -88,9 +88,9 @@ stages:
               env:
                 TF_VAR_service_principal_app_id: $(NONPRD_ARM_CLIENT_ID)
                 TF_VAR_service_principal_password: $(NONPRD_ARM_CLIENT_SECRET)
-                aks_registry_url: $(aks_prod_registry_url)
+                aks_registry_url: $(aks_dev_registry_url)
                 aks_kubeconfig_path: $(ins_aks_kubeconfig_path)
-                aks_monitoring_domain: $(aks_dr_monitoring_domain)
+                aks_monitoring_domain: $(aks_dev_monitoring_domain)
                 aks_rbac_developers_role: $(aks_rbac_developers_role)
                 aks_rbac_developers_aad_group: $(aks_rbac_developers_aad_group)
                 aks_default_certificate_path: $(aks_private_certificate_path)
