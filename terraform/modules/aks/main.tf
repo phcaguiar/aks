@@ -53,7 +53,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     name            = "akspool"
     node_count      = lookup(local.aks_networks[count.index], "count")
     vm_size         = lookup(local.aks_networks[count.index], "vm_size")
-    type            = "AvailabilitySet"
+    # type            = "AvailabilitySet"
     max_pods        = 110
     os_disk_size_gb = 50
     min_count       = lookup(local.aks_networks[count.index], "min_count")
