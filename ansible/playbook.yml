@@ -5,19 +5,36 @@
   name: Configure Financial Products Kubernetes Clusters
   tasks:
 
-    - name: "Configure internal ingress"
+    - name: "Configure ingress to aks 1"
       import_role: 
         name: stone-payments.aks
       vars:
         aks_service_principal_app_id: "{{ lookup('env','TF_VAR_service_principal_app_id') }}"
         aks_service_principal_password: "{{ lookup('env','TF_VAR_service_principal_password') }}"
         aks_registry_url: "{{ lookup('env','aks_registry_url') }}"
-        aks_kubeconfig_path: "{{ lookup('env','aks_kubeconfig_path') }}"
-        aks_rbac_developers_role: "{{ lookup('env','aks_rbac_developers_role') }}"
+        aks_kubeconfig_path: "ins_kube_config_raw_aks1"
+        aks_rbac_developers_role: "edit"
         aks_rbac_developers_aad_group: "{{ lookup('env','aks_rbac_developers_aad_group') }}"
-        aks_monitoring_domain: "{{ lookup('env','aks_monitoring_domain') }}"
-        aks_default_certificate_key_path: "{{ lookup('env','aks_default_certificate_key_path') }}"
-        aks_default_certificate_path: "{{ lookup('env','aks_default_certificate_path') }}"
-        grafana_name: "{{ lookup('env','grafana_name') }}"
-        prometheus_name: "{{ lookup('env','prometheus_name') }}"
-        alertmanager_name: "{{ lookup('env','alertmanager_name') }}"
+        aks_monitoring_domain: "dev.dca.financialproducts.stone.com.br"
+        aks_default_certificate_key_path: "cert.key"
+        aks_default_certificate_path: "cert.crt"
+        grafana_name: "grafana-inside-cl1"
+        prometheus_name: "alertmanager-inside-cl1"
+        alertmanager_name: "prometheus-inside-cl1"
+
+    - name: "Configure ingress to aks 2"
+      import_role: 
+        name: stone-payments.aks
+      vars:
+        aks_service_principal_app_id: "{{ lookup('env','TF_VAR_service_principal_app_id') }}"
+        aks_service_principal_password: "{{ lookup('env','TF_VAR_service_principal_password') }}"
+        aks_registry_url: "{{ lookup('env','aks_registry_url') }}"
+        aks_kubeconfig_path: "ins_kube_config_raw_aks2"
+        aks_rbac_developers_role: "edit"
+        aks_rbac_developers_aad_group: "{{ lookup('env','aks_rbac_developers_aad_group') }}"
+        aks_monitoring_domain: "dev.dca.financialproducts.stone.com.br"
+        aks_default_certificate_key_path: "cert.key"
+        aks_default_certificate_path: "cert.crt"
+        grafana_name: "grafana-inside-cl2"
+        prometheus_name: "alertmanager-inside-cl2"
+        alertmanager_name: "prometheus-inside-cl2"        
