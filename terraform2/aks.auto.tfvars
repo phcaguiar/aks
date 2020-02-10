@@ -1,4 +1,4 @@
-kubernetes_service_name_suffix  =   "FinProd-EC2-DEV-CL1"
+kubernetes_service_name_suffix  =   "FinProd-EC2-DEV-CL2"
 node_count_ins          =   "3"
 vm_size_ins             =   "Standard_D2_v3"
 kubernetes_version_ins  =   "1.15.7"
