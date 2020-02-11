@@ -129,7 +129,7 @@ stages:
       - bash: |
           export PATH="$HOME/.tfenv/bin:$PATH"
           terraform init 
-        workingDirectory: 'terraform'
+        workingDirectory: 'terraform2'
         displayName: 'Terraform Init'
         env:
           ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
