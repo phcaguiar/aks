@@ -2,14 +2,14 @@ name: $(Date:yyyyMMdd)$(Rev:.r)
 trigger:
   branches:
     include:
-    - master
+    - feat/prometheus-integration
   paths:
     exclude:
     - README.md
 pr:
   branches:
     include:
-    - master
+    - feat/prometheus-integration
 stages:
 - template: build.yaml
 - template: deploy.yaml

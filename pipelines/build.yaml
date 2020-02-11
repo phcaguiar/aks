@@ -43,11 +43,11 @@ stages:
       - publish: ansible
         artifact: ansible
 
-    - job: Dev_Build
+    - job: Dev_Build_aks1
       variables:
       - group: "Infra Dev"
       - group: "Non-PRD Financial Products Service Principal"
-      displayName: "Dev Build"
+      displayName: "Dev Build aks1"
       pool:
         vmImage: 'ubuntu-latest'
       workspace:
@@ -100,4 +100,63 @@ stages:
         displayName: 'Delete .git-credentials'
         condition: in(variables['Agent.JobStatus'], 'Succeeded', 'SucceededWithIssues', 'Failed', 'Canceled', 'PartiallySucceeded')              
       - publish: terraform
-        artifact: plan-dev
+        artifact: plan-dev-aks1
+
+      - job: Dev_Build_aks2
+        variables:
+        - group: "Infra Dev"
+        - group: "Non-PRD Financial Products Service Principal"
+        displayName: "Dev Build aks2"
+        pool:
+          vmImage: 'ubuntu-latest'
+        workspace:
+          clean: all
+        steps:
+        - bash: |
+            git config --global url."https://github.com".insteadOf git://github.com
+            git config --global url."https://github.com/".insteadOf git@github.com:
+            git config --global url."https://".insteadOf git://
+            git config --global credential.helper store
+            cd ~
+            echo "https://$(githubtoken):x-oauth-basic@github.com" > .git-credentials
+          displayName: 'Config GitHub Token Auth'            
+        - bash: |
+            git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+            export PATH="$HOME/.tfenv/bin:$PATH"
+            tfenv install
+          workingDirectory: 'terraform'
+          displayName: 'Sets terraform version to the specified on .terraform-version file'
+        - bash: |
+            export PATH="$HOME/.tfenv/bin:$PATH"
+            terraform init 
+          workingDirectory: 'terraform'
+          displayName: 'Terraform Init'
+          env:
+            ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
+        - bash: |
+            export PATH="$HOME/.tfenv/bin:$PATH"
+            terraform validate 
+          workingDirectory: 'terraform'
+          displayName: 'Terraform Validate'
+        - bash: |
+            export PATH="$HOME/.tfenv/bin:$PATH"
+            terraform plan -out tf-plan
+          workingDirectory: 'terraform'
+          displayName: 'Terraform Plan'
+          env:
+            ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
+            ARM_CLIENT_SECRET: $(NONPRD_ARM_CLIENT_SECRET)
+            ARM_TENANT_ID: $(COMMON_ARM_TENANT_ID)
+            ARM_CLIENT_ID: $(NONPRD_ARM_CLIENT_ID)
+            TF_VAR_ad_client_app_id: $(TF_VAR_ad_client_app_id)
+            TF_VAR_ad_server_app_id: $(TF_VAR_ad_server_app_id)
+            TF_VAR_ad_tennant_id: $(COMMON_ARM_TENANT_ID)
+            TF_VAR_ad_server_app_secret: $(TF_VAR_ad_server_app_secret)
+            TF_VAR_service_principal_app_id: $(NONPRD_ARM_CLIENT_ID)
+            TF_VAR_service_principal_password: $(NONPRD_ARM_CLIENT_SECRET)
+        - bash: |
+            rm -f ~/.git-credentials
+          displayName: 'Delete .git-credentials'
+          condition: in(variables['Agent.JobStatus'], 'Succeeded', 'SucceededWithIssues', 'Failed', 'Canceled', 'PartiallySucceeded')              
+        - publish: terraform
+          artifact: plan-dev-aks2

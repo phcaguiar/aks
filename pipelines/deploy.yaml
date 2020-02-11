@@ -2,7 +2,7 @@ stages:
 
 - stage: Dev_Deploy
   displayName: "Dev Deploy"
-  condition: "and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/master'))"
+  condition: "and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/feat/prometheus-integration'))"
   variables:
     - group: Infra Common
     - group: Infra Dev
@@ -12,8 +12,8 @@ stages:
     - name: ENV
       value: ec2-dev
   jobs:
-    - deployment: Dev_Deploy
-      displayName: "Dev Deploy"
+    - deployment: Dev_Deploy_aks1
+      displayName: "Dev Deploy aks1"
       environment: ec2-dev
       pool:
         vmImage: 'ubuntu-latest'
@@ -22,24 +22,24 @@ stages:
           deploy:  
             steps:
             - download: current
-              artifact: plan-dev
+              artifact: plan-dev-aks1
             - download: current  
               artifact: ansible
             - bash: |
                 chmod +x .terraform/plugins/linux_amd64/terraform-provider*
-              workingDirectory: $(Pipeline.Workspace)/plan-dev
+              workingDirectory: $(Pipeline.Workspace)/plan-dev-aks1
               displayName: 'Set Terraform Provider File Permissions'
             - bash: |
                 git clone https://github.com/tfutils/tfenv.git ~/.tfenv
                 export PATH="$HOME/.tfenv/bin:$PATH"
                 tfenv install
-              workingDirectory: $(Pipeline.Workspace)/plan-dev
+              workingDirectory: $(Pipeline.Workspace)/plan-dev-aks1
               displayName: 'Sets terraform version to the specified on .terraform-version file'
             - bash: |
                 export PATH="$HOME/.tfenv/bin:$PATH"
                 terraform apply -auto-approve tf-plan
               displayName: 'Terraform Apply'
-              workingDirectory: $(Pipeline.Workspace)/plan-dev
+              workingDirectory: $(Pipeline.Workspace)/plan-dev-aks1
               env:
                 ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
                 ARM_CLIENT_SECRET: $(NONPRD_ARM_CLIENT_SECRET)
@@ -55,7 +55,7 @@ stages:
                 export PATH="$HOME/.tfenv/bin:$PATH"
                 terraform output ins_kube_config_raw > $(Pipeline.Workspace)/ansible/$(ins_aks_kubeconfig_path)
               displayName: 'Terraform Output to Extract kubeconfig of Clusters'
-              workingDirectory: $(Pipeline.Workspace)/plan-dev
+              workingDirectory: $(Pipeline.Workspace)/plan-dev-aks1
               env:
                 ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
                 ARM_CLIENT_SECRET: $(NONPRD_ARM_CLIENT_SECRET)
@@ -79,24 +79,19 @@ stages:
               workingDirectory: $(Pipeline.Workspace)/ansible
             - bash: |
                 python3 -m pipenv run ansible-playbook playbook.yml -i inventories/dev-ec2/
-              displayName: 'Run Ansible to configure inside cluster'
+              displayName: 'Run Ansible to configure aks clusters'
               workingDirectory: $(Pipeline.Workspace)/ansible
               env:
                 TF_VAR_service_principal_app_id: $(NONPRD_ARM_CLIENT_ID)
                 TF_VAR_service_principal_password: $(NONPRD_ARM_CLIENT_SECRET)
                 aks_registry_url: $(aks_dev_registry_url)
-                aks_kubeconfig_path: $(ins_aks_kubeconfig_path)
-                aks_monitoring_domain: $(aks_dev_monitoring_domain)
-                aks_rbac_developers_role: $(aks_rbac_developers_role)
                 aks_rbac_developers_aad_group: $(aks_rbac_developers_aad_group)
                 aks_default_certificate_path: $(aks_private_certificate_path)
                 aks_default_certificate_key_path: $(aks_private_certificate_key_path)
-                grafana_name: $(aks_inside_grafana_name)
-                prometheus_name: $(aks_inside_prometheus_name)
-                alertmanager_name: $(aks_inside_alertmanager_name)
                 vsts_accesstoken: $(vsts_accesstoken)
             - bash: |
-                rm -rf $(ins_aks_kubeconfig_path)
+                rm -rf ins_kube_config_raw_aks1
+                rm -rf ins_kube_config_raw_aks2
                 rm -rf $(aks_private_certificate_path)
                 rm -rf $(aks_private_certificate_key_path)
                 rm -rf $(aks_public_certificate_path)
