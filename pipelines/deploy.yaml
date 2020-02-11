@@ -23,6 +23,8 @@ stages:
             steps:
             - download: current
               artifact: plan-dev-aks1
+            - download: current
+              artifact: plan-dev-aks2
             - download: current  
               artifact: ansible
             - bash: |
@@ -53,9 +55,30 @@ stages:
                 TF_VAR_service_principal_password: $(NONPRD_ARM_CLIENT_SECRET)
             - bash: |
                 export PATH="$HOME/.tfenv/bin:$PATH"
-                terraform output ins_kube_config_raw > $(Pipeline.Workspace)/ansible/$(ins_aks_kubeconfig_path)
+                terraform apply -auto-approve tf-plan
+              displayName: 'Terraform Apply'
+              workingDirectory: $(Pipeline.Workspace)/plan-dev-aks2
+              env:
+                ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
+                ARM_CLIENT_SECRET: $(NONPRD_ARM_CLIENT_SECRET)
+                ARM_TENANT_ID: $(COMMON_ARM_TENANT_ID)
+                ARM_CLIENT_ID: $(NONPRD_ARM_CLIENT_ID)
+                TF_VAR_ad_client_app_id: $(TF_VAR_ad_client_app_id)
+                TF_VAR_ad_server_app_id: $(TF_VAR_ad_server_app_id)
+                TF_VAR_ad_tennant_id: $(COMMON_ARM_TENANT_ID)
+                TF_VAR_ad_server_app_secret: $(TF_VAR_ad_server_app_secret)
+                TF_VAR_service_principal_app_id: $(NONPRD_ARM_CLIENT_ID)
+                TF_VAR_service_principal_password: $(NONPRD_ARM_CLIENT_SECRET)                
+            - bash: |
+                export PATH="$HOME/.tfenv/bin:$PATH"
+                terraform output ins_kube_config_raw > $(Pipeline.Workspace)/ansible/ins_kube_config_raw_aks1
               displayName: 'Terraform Output to Extract kubeconfig of Clusters'
               workingDirectory: $(Pipeline.Workspace)/plan-dev-aks1
+            - bash: |
+                export PATH="$HOME/.tfenv/bin:$PATH"
+                terraform output ins_kube_config_raw > $(Pipeline.Workspace)/ansible/ins_kube_config_raw_aks2
+              displayName: 'Terraform Output to Extract kubeconfig of Clusters'
+              workingDirectory: $(Pipeline.Workspace)/plan-dev-aks2
               env:
                 ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
                 ARM_CLIENT_SECRET: $(NONPRD_ARM_CLIENT_SECRET)

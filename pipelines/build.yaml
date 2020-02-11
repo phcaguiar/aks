@@ -124,7 +124,7 @@ stages:
             git clone https://github.com/tfutils/tfenv.git ~/.tfenv
             export PATH="$HOME/.tfenv/bin:$PATH"
             tfenv install
-          workingDirectory: 'terraform'
+          workingDirectory: 'terraform2'
           displayName: 'Sets terraform version to the specified on .terraform-version file'
         - bash: |
             export PATH="$HOME/.tfenv/bin:$PATH"
@@ -136,12 +136,12 @@ stages:
         - bash: |
             export PATH="$HOME/.tfenv/bin:$PATH"
             terraform validate 
-          workingDirectory: 'terraform'
+          workingDirectory: 'terraform2'
           displayName: 'Terraform Validate'
         - bash: |
             export PATH="$HOME/.tfenv/bin:$PATH"
             terraform plan -out tf-plan
-          workingDirectory: 'terraform'
+          workingDirectory: 'terraform2'
           displayName: 'Terraform Plan'
           env:
             ARM_ACCESS_KEY: $(NONPRD_ARM_ACCESS_KEY)
@@ -158,5 +158,5 @@ stages:
             rm -f ~/.git-credentials
           displayName: 'Delete .git-credentials'
           condition: in(variables['Agent.JobStatus'], 'Succeeded', 'SucceededWithIssues', 'Failed', 'Canceled', 'PartiallySucceeded')              
-        - publish: terraform
+        - publish: terraform2
           artifact: plan-dev-aks2
