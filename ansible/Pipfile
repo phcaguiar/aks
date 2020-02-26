@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 openshift = "==0.8.7"
-ansible = "===2.7.0"
+ansible = "===2.7.16"
 docker-py = "===1.8.0" # The minimal required version for docker_* modules is actually 1.8, and not 1.7 as the documentation for ansible 2.7 states. See: https://github.com/ansible/ansible/issues/29512
 
 [dev-packages]
